@@ -30,6 +30,6 @@ python3 bot.py
 
 ## 感谢非常棒的开源项目让我学习
 
-[python-telegram-bot/python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
-[dawoudt/JustWatchAPI](https://github.com/dawoudt/JustWatchAPI)
+[python-telegram-bot/python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)  
+[dawoudt/JustWatchAPI](https://github.com/dawoudt/JustWatchAPI)  
 [celiao/tmdbsimple](https://github.com/celiao/tmdbsimple/)
