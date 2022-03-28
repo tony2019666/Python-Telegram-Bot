@@ -3,7 +3,7 @@ import bot
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from justwatch import JustWatch
 import tmdbsimple as tmdb
-tmdb.API_KEY = bot.bot_token
+tmdb.API_KEY = bot.tmdb_apikey
 tmdb.REQUESTS_TIMEOUT = bot.tmdb_timeout
 
 
@@ -81,7 +81,6 @@ def onInfomation(object_type, tmdbid, query):
             content_type = 'show'
 
             response = tmdb.TV(tmdbid).info(language='zh-CN')
-            print(response)
             title = response['name']
             original_title = response['original_name']
             text = f'*{object_switch}*：*{title}* ｜ {original_title}\n\n'
