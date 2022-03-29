@@ -25,6 +25,11 @@ def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_markdown(text)
 
 
+def today(update: Update, context: CallbackContext) -> None:
+    text, reply_markup = ButtonChecker.onTrending('today')
+    update.message.reply_markdown(
+        text, reply_markup=reply_markup)
+
 def search(update: Update, context: CallbackContext) -> None:
     try:
         content = context.args
@@ -99,6 +104,7 @@ def main() -> None:
 
     dispatcher.add_handler(CommandHandler("s", search))
     dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("today", today))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
 
     updater.start_polling()

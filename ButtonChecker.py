@@ -1,3 +1,5 @@
+import json
+import requests
 import TypeSwtich
 import bot
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -167,17 +169,15 @@ def onSelectCountry(content_type, jwdbid):
         results = just_watch.get_title(
             title_id=jwdbid, content_type=content_type)
         if 'offers' in results:
+            button = InlineKeyboardButton(i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')
             if len(keyboard) == 0:
-                keyboard.append([InlineKeyboardButton(
-                    i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')])
+                keyboard.append([button])
             else:
                 inline = len(keyboard)-1
                 if len(keyboard[inline]) < 3:
-                    keyboard[inline].append(InlineKeyboardButton(
-                        i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}'))
+                    keyboard[inline].append(button)
                 else:
-                    keyboard.append([InlineKeyboardButton(
-                        i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')])
+                    keyboard.append([button])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     return text, reply_markup
@@ -236,5 +236,39 @@ def onOffer(country, content_type, jwdbid, index):
                 currency = dict[i]['currency']
                 keyboard.append([InlineKeyboardButton(
                     f'{name} - 💰{price}{currency}', url=url)])
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            return text, reply_markup
+
+
+def onTrending(datatype):
+    match datatype:
+        case 'today':
+            key = bot.tmdb_apikey
+            language = 'zh-CN'
+            url = f'https://api.themoviedb.org/3/trending/all/day?api_key={key}&language={language}'
+            response = json.loads(requests.get(url).text)
+            text = f'👇为你送上本日特别推荐：👇'
+            keyboard = []
+            results = response['results']
+            for i in range(len(results)):
+                recommend = results[i]
+                id = recommend['id']
+                object_type = 'movie'
+                title = 'title'
+                if recommend['media_type'] == 'tv':
+                    object_type = 'tv'
+                    title = 'name'
+                query = recommend[title]
+                object_switch = TypeSwtich.onType(object_type)
+                content = f'#{i+1} -《{query}》{object_switch}'
+                button = InlineKeyboardButton(content, callback_data=f'info_{object_type}_{id}_{query}')
+                if len(keyboard) == 0:
+                    keyboard.append([button])
+                else:
+                    inline = len(keyboard)-1
+                    if len(keyboard[inline]) < 2:
+                        keyboard[inline].append(button)
+                    else:
+                        keyboard.append([button])
             reply_markup = InlineKeyboardMarkup(keyboard)
             return text, reply_markup
