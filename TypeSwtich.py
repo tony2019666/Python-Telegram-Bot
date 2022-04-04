@@ -23,3 +23,18 @@ def onProviders(providers, id):
     for i in providers:
         if id == i['id']:
             return i['clear_name']
+
+
+def onOfferType(key):
+    match key:
+        case 'flatrate':
+            keytype = '在线观看🖥（付费）'
+        case 'free':
+            keytype = '在线观看🖥（免费）'
+        case 'ads':
+            keytype = '在线观看🖥（广告）'
+        case 'buy':
+            keytype = '购买方式💵（买断）'
+        case 'rent':
+            keytype = '购买方式💵（租借）'
+    return keytype

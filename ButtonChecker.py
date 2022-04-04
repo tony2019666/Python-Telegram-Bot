@@ -1,4 +1,5 @@
 import json
+from lib2to3.pytree import convert
 import requests
 import TypeSwtich
 import bot
@@ -184,65 +185,71 @@ def onSelectCountry(content_type, jwdbid):
     return text, reply_markup
 
 
-def onOffer(country, content_type, jwdbid, index):
+def onOffer(country, content_type, jwdbid):
     just_watch = JustWatch(country=country)
     results = just_watch.get_title(title_id=jwdbid, content_type=content_type)
-    match index:
-        case 0:
-            dict = {}
-            if 'offers' in results:
-                providers = just_watch.get_providers()
-                for i in results['offers']:
-                    if i['monetization_type'] == 'flatrate':
-                        name = TypeSwtich.onProviders(
-                            providers, i['provider_id'])
-                        url = i['urls']['standard_web']
-                        dict[name] = {}
-                        dict[name]['name'] = name
-                        dict[name]['url'] = url
+    providers = just_watch.get_providers()
+    return results['offers'], providers
 
-            keyboard = []
-            text = ''
-            dictcontent = False
-            if len(dict) > 0:
-                text = f'*找到了这些在{TypeSwtich.onCountry(country)}的观看方式🖥*'
-                dictcontent = True
-            for i in dict:
-                name = dict[i]['name']
-                url = dict[i]['url']
-                keyboard.append([InlineKeyboardButton(f'{name}', url=url)])
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            return dictcontent, text, reply_markup
-        case 1:
-            dict = {}
-            if 'offers' in results:
-                providers = just_watch.get_providers()
-                for i in results['offers']:
-                    if i['monetization_type'] == 'buy':
-                        name = TypeSwtich.onProviders(
-                            providers, i['provider_id'])
-                        url = i['urls']['standard_web']
-                        dict[name] = {}
-                        dict[name]['name'] = name
-                        dict[name]['url'] = url
-                        dict[name]['price'] = i['retail_price']
-                        dict[name]['currency'] = i['currency']
 
-            keyboard = []
-            text = ''
-            dictcontent = False
-            if len(dict) > 0:
-                text = f'*找到了这些在{TypeSwtich.onCountry(country)}的购买方式💵*'
-                dictcontent = True
-            for i in dict:
-                name = dict[i]['name']
-                url = dict[i]['url']
-                price = dict[i]['price']
-                currency = dict[i]['currency']
-                keyboard.append([InlineKeyboardButton(
-                    f'{name} - 💰{price}{currency}', url=url)])
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            return dictcontent, text, reply_markup
+def onOfferConvert(offer, providers):
+    dictlist = {}
+    for i in offer:
+        name = TypeSwtich.onProviders(providers, i['provider_id'])
+        url = i['urls']['standard_web']
+        match i['monetization_type']:
+            case 'flatrate':
+                if 'flatrate' not in dictlist:
+                    dictlist['flatrate'] = {}
+                dictlist['flatrate'][name] = {}
+                dictlist['flatrate'][name]['name'] = name
+                dictlist['flatrate'][name]['url'] = url
+            case 'free':
+                if 'free' not in dictlist:
+                    dictlist['free'] = {}
+                dictlist['free'][name] = {}
+                dictlist['free'][name]['name'] = name
+                dictlist['free'][name]['url'] = url
+            case 'ads':
+                if 'ads' not in dictlist:
+                    dictlist['ads'] = {}
+                dictlist['ads'][name] = {}
+                dictlist['ads'][name]['name'] = name
+                dictlist['ads'][name]['url'] = url
+            case 'buy':
+                if 'buy' not in dictlist:
+                    dictlist['buy'] = {}
+                dictlist['buy'][name] = {}
+                dictlist['buy'][name]['name'] = name
+                dictlist['buy'][name]['url'] = url
+                dictlist['buy'][name]['price'] = i['retail_price']
+                dictlist['buy'][name]['currency'] = i['currency']
+            case 'rent':
+                if 'rent' not in dictlist:
+                    dictlist['rent'] = {}
+                dictlist['rent'][name] = {}
+                dictlist['rent'][name]['name'] = name
+                dictlist['rent'][name]['url'] = url
+                dictlist['rent'][name]['price'] = i['retail_price']
+                dictlist['rent'][name]['currency'] = i['currency']
+    return dictlist
+
+
+def onOfferSender(dictlist, key, country):
+    keyboard = []
+    keytype = TypeSwtich.onOfferType(key)
+    text = f'*找到了这些在{TypeSwtich.onCountry(country)}的{keytype}*'
+    extra = ''
+    for i in dictlist:
+        name = dictlist[i]['name']
+        url = dictlist[i]['url']
+        if key == 'buy' or key == 'rent':
+            price = dictlist[i]['price']
+            currency = dictlist[i]['currency']
+            extra = f' - 💰{price}{currency}'
+        keyboard.append([InlineKeyboardButton(f'{name}{extra}', url=url)])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    return text, reply_markup
 
 
 def onTrending(datatype):

@@ -30,6 +30,7 @@ def today(update: Update, context: CallbackContext) -> None:
     update.message.reply_markdown(
         text, reply_markup=reply_markup)
 
+
 def search(update: Update, context: CallbackContext) -> None:
     try:
         content = context.args
@@ -92,16 +93,18 @@ def button(update: Update, context: CallbackContext) -> None:
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'country':
-            for i in range(2):
-                dictconntent, text, reply_markup = ButtonChecker.onOffer(
-                calldata[1], calldata[2], calldata[3],i)
-                if dictconntent:
-                    bot.send_message(
-                        chat_id=update.effective_message.chat_id,
-                        text=text,
-                        reply_markup=reply_markup,
-                        parse_mode=ParseMode.MARKDOWN
-            )
+            offer, providers = ButtonChecker.onOffer(
+                calldata[1], calldata[2], calldata[3])
+            dictlist = ButtonChecker.onOfferConvert(offer, providers)
+            for i in dictlist:
+                text, reply_markup = ButtonChecker.onOfferSender(
+                    dictlist[i], i, calldata[1])
+                message = bot.send_message(
+                    chat_id=update.effective_message.chat_id,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN
+                )
 
 
 def main() -> None:
