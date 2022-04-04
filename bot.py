@@ -77,23 +77,30 @@ def button(update: Update, context: CallbackContext) -> None:
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'watch':
+            message = bot.send_message(
+                chat_id=update.effective_message.chat_id,
+                text='正在搜索可用的国家或地区...',
+                parse_mode=ParseMode.MARKDOWN
+            )
             text, reply_markup = ButtonChecker.onSelectCountry(
                 calldata[1], calldata[2])
-            bot.send_message(
+            bot.edit_message_text(
                 chat_id=update.effective_message.chat_id,
                 text=text,
+                message_id=message.message_id,
                 reply_markup=reply_markup,
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'country':
             for i in range(2):
-                text, reply_markup = ButtonChecker.onOffer(
+                dictconntent, text, reply_markup = ButtonChecker.onOffer(
                 calldata[1], calldata[2], calldata[3],i)
-                bot.send_message(
-                    chat_id=update.effective_message.chat_id,
-                    text=text,
-                    reply_markup=reply_markup,
-                    parse_mode=ParseMode.MARKDOWN
+                if dictconntent:
+                    bot.send_message(
+                        chat_id=update.effective_message.chat_id,
+                        text=text,
+                        reply_markup=reply_markup,
+                        parse_mode=ParseMode.MARKDOWN
             )
 
 
@@ -105,7 +112,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("s", search))
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("today", today))
-    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.add_handler(CallbackQueryHandler(button))
 
     updater.start_polling()
     updater.idle()

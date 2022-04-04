@@ -16,7 +16,7 @@ def getCountry():
 
 
 def getMaxResults(num):
-    max_results = 5
+    max_results = 10
     if num < max_results:
         max_results = num
     return max_results
@@ -39,7 +39,7 @@ def onSearchResult(object_type, query):
     object_switch = TypeSwtich.onType(object_type)
     keyboard = []
     keyboard.append([InlineKeyboardButton(
-                    f'👉不满意搜索结果？再来一次吧', callback_data=f'again_{query}')])
+                    f'👉不满意搜索结果？再来一次吧⏳', callback_data=f'again_{query}')])
     match object_type:
         case 'tv':
             response = search.tv(query={query}, language='zh-CN')
@@ -135,7 +135,7 @@ def onInfomation(object_type, tmdbid, query):
     text = f'{text}🌐 *地址*：{url}'
     keyboard = []
     keyboard.append([InlineKeyboardButton(
-                    f'👉不满意搜索结果？再来一次吧', callback_data=f'again_{query}')])
+                    f'👉不满意搜索结果？再来一次吧⏳', callback_data=f'again_{query}')])
     justwatch = JustWatch('US')
     results = justwatch.search_for_item(
         query=original_title, content_types=[content_type])
@@ -169,7 +169,8 @@ def onSelectCountry(content_type, jwdbid):
         results = just_watch.get_title(
             title_id=jwdbid, content_type=content_type)
         if 'offers' in results:
-            button = InlineKeyboardButton(i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')
+            button = InlineKeyboardButton(
+                i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')
             if len(keyboard) == 0:
                 keyboard.append([button])
             else:
@@ -201,15 +202,17 @@ def onOffer(country, content_type, jwdbid, index):
                         dict[name]['url'] = url
 
             keyboard = []
-            text = f'*没有找到在{TypeSwtich.onCountry(country)}的观看方式🖥*'
+            text = ''
+            dictcontent = False
             if len(dict) > 0:
                 text = f'*找到了这些在{TypeSwtich.onCountry(country)}的观看方式🖥*'
+                dictcontent = True
             for i in dict:
                 name = dict[i]['name']
                 url = dict[i]['url']
                 keyboard.append([InlineKeyboardButton(f'{name}', url=url)])
             reply_markup = InlineKeyboardMarkup(keyboard)
-            return text, reply_markup
+            return dictcontent, text, reply_markup
         case 1:
             dict = {}
             if 'offers' in results:
@@ -226,9 +229,11 @@ def onOffer(country, content_type, jwdbid, index):
                         dict[name]['currency'] = i['currency']
 
             keyboard = []
-            text = f'*没有找到在{TypeSwtich.onCountry(country)}的购买方式💵*'
+            text = ''
+            dictcontent = False
             if len(dict) > 0:
                 text = f'*找到了这些在{TypeSwtich.onCountry(country)}的购买方式💵*'
+                dictcontent = True
             for i in dict:
                 name = dict[i]['name']
                 url = dict[i]['url']
@@ -237,7 +242,7 @@ def onOffer(country, content_type, jwdbid, index):
                 keyboard.append([InlineKeyboardButton(
                     f'{name} - 💰{price}{currency}', url=url)])
             reply_markup = InlineKeyboardMarkup(keyboard)
-            return text, reply_markup
+            return dictcontent, text, reply_markup
 
 
 def onTrending(datatype):
@@ -261,7 +266,8 @@ def onTrending(datatype):
                 query = recommend[title]
                 object_switch = TypeSwtich.onType(object_type)
                 content = f'#{i+1} -《{query}》{object_switch}'
-                button = InlineKeyboardButton(content, callback_data=f'info_{object_type}_{id}_{query}')
+                button = InlineKeyboardButton(
+                    content, callback_data=f'info_{object_type}_{id}_{query}')
                 if len(keyboard) == 0:
                     keyboard.append([button])
                 else:
