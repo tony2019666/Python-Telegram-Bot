@@ -163,13 +163,14 @@ def onInfomation(object_type, tmdbid, query):
 
 def onSelectCountry(content_type, jwdbid):
     list = getCountry()
-    text = '👇请选择需要搜索的国家或地区👇'
     keyboard = []
+    text = '🚫暂未找到可用的平台🚫'
     for i in list:
         just_watch = JustWatch(country=i[1])
         results = just_watch.get_title(
             title_id=jwdbid, content_type=content_type)
         if 'offers' in results:
+            text = '👇请选择需要搜索的国家或地区👇'
             button = InlineKeyboardButton(
                 i[0], callback_data=f'country_{i[1]}_{content_type}_{jwdbid}')
             if len(keyboard) == 0:
