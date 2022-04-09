@@ -5,7 +5,9 @@ import logging
 from telegram import Update, ParseMode
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
-import ButtonChecker
+import Commands.search as SearchCommand
+import Commands.today as TodayCommand
+
 # Telegram Bot Token
 bot_token = ''
 # TMDB APIKey
@@ -26,7 +28,7 @@ def start(update: Update, context: CallbackContext) -> None:
 
 
 def today(update: Update, context: CallbackContext) -> None:
-    text, reply_markup = ButtonChecker.onTrending('today')
+    text, reply_markup = TodayCommand.onTrending('today')
     update.message.reply_markdown(
         text, reply_markup=reply_markup)
 
@@ -37,7 +39,7 @@ def search(update: Update, context: CallbackContext) -> None:
         query = str(context.args[0])
         for i in range(1, len(content)):
             query = query + ' '+context.args[i]
-        text, reply_markup = ButtonChecker.onSearch(query)
+        text, reply_markup = SearchCommand.onSearch(query)
         update.message.reply_markdown(
             text, reply_markup=reply_markup)
 
@@ -54,7 +56,7 @@ def button(update: Update, context: CallbackContext) -> None:
     print(query.data)
     match calltype:
         case 'again':
-            text, reply_markup = ButtonChecker.onSearch(
+            text, reply_markup = SearchCommand.onSearch(
                 calldata[1])
             query.edit_message_text(
                 text=text,
@@ -62,7 +64,7 @@ def button(update: Update, context: CallbackContext) -> None:
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'search':
-            text, reply_markup = ButtonChecker.onSearchResult(
+            text, reply_markup = SearchCommand.onSearchResult(
                 calldata[1], calldata[2])
             query.edit_message_text(
                 text=text,
@@ -70,7 +72,7 @@ def button(update: Update, context: CallbackContext) -> None:
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'info':
-            text, reply_markup = ButtonChecker.onInfomation(
+            text, reply_markup = SearchCommand.onInfomation(
                 calldata[1], calldata[2], calldata[3])
             query.edit_message_text(
                 text=text,
@@ -83,7 +85,7 @@ def button(update: Update, context: CallbackContext) -> None:
                 text='正在搜索可用的国家或地区...',
                 parse_mode=ParseMode.MARKDOWN
             )
-            text, reply_markup = ButtonChecker.onSelectCountry(
+            text, reply_markup = SearchCommand.onSelectCountry(
                 calldata[1], calldata[2])
             bot.edit_message_text(
                 chat_id=update.effective_message.chat_id,
@@ -93,11 +95,11 @@ def button(update: Update, context: CallbackContext) -> None:
                 parse_mode=ParseMode.MARKDOWN
             )
         case 'country':
-            offer, providers = ButtonChecker.onOffer(
+            offer, providers = SearchCommand.onOffer(
                 calldata[1], calldata[2], calldata[3])
-            dictlist = ButtonChecker.onOfferConvert(offer, providers)
+            dictlist = SearchCommand.onOfferConvert(offer, providers)
             for i in dictlist:
-                text, reply_markup = ButtonChecker.onOfferSender(
+                text, reply_markup = SearchCommand.onOfferSender(
                     dictlist[i], i, calldata[1])
                 message = bot.send_message(
                     chat_id=update.effective_message.chat_id,

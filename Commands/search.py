@@ -1,19 +1,12 @@
-import json
-from lib2to3.pytree import convert
-import requests
-import TypeSwtich
+import mapping
 import bot
+import json
+import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from justwatch import JustWatch
 import tmdbsimple as tmdb
 tmdb.API_KEY = bot.tmdb_apikey
 tmdb.REQUESTS_TIMEOUT = bot.tmdb_timeout
-
-
-def getCountry():
-    list = [['香港🇭🇰', 'HK'], ["台湾🇹🇼", 'TW'], ["美国🇺🇸", 'US'], ["新加坡🇸🇬", 'SG'], [
-        "韩国🇰🇷", 'KR'], ["日本🇯🇵", 'JP'], ["英国🇬🇧", 'GB'], ["土耳其🇹🇷", 'TR']]
-    return list
 
 
 def getMaxResults(num):
@@ -26,8 +19,8 @@ def getMaxResults(num):
 def onSearch(query):
     text = f'📝你搜索的是：*{query}*'
     text = f'{text}\n👇请选择需要搜索的类型👇'
-    tv = TypeSwtich.onType('tv')
-    movie = TypeSwtich.onType('movie')
+    tv = mapping.onType('tv')
+    movie = mapping.onType('movie')
     keybaord = [[InlineKeyboardButton(f'{tv}', callback_data=f'search_tv_{query}'), InlineKeyboardButton(
         f'{movie}', callback_data=f'search_movie_{query}')]]
     reply_markup = InlineKeyboardMarkup(keybaord)
@@ -37,7 +30,7 @@ def onSearch(query):
 def onSearchResult(object_type, query):
     search = tmdb.Search()
     text = f'❌*没有找到结果*❌'
-    object_switch = TypeSwtich.onType(object_type)
+    object_switch = mapping.onType(object_type)
     keyboard = []
     keyboard.append([InlineKeyboardButton(
                     f'👉不满意搜索结果？再来一次吧⏳', callback_data=f'again_{query}')])
@@ -77,8 +70,8 @@ def onSearchResult(object_type, query):
 
 
 def onInfomation(object_type, tmdbid, query):
-    object_switch = TypeSwtich.onType(object_type)
-    text = '1'
+    object_switch = mapping.onType(object_type)
+    text = ''
     match object_type:
         case 'tv':
             content_type = 'show'
@@ -88,21 +81,14 @@ def onInfomation(object_type, tmdbid, query):
             original_title = response['original_name']
             text = f'*{object_switch}*：*{title}* ｜ {original_title}\n\n'
 
-            genre = ''
-            if len(response['genres']) > 0:
-                for i in response['genres']:
-                    name = i['name']
-                    genre = f'{genre}{name} '
-                text = f'{text}🗂 *类型*：{genre}\n'
-
             time_seasons = response['number_of_seasons']
             time_episodes = response['number_of_episodes']
             if time_seasons > 0 or time_episodes > 0:
-                text = f'{text}⏰ *时长*：共 {time_seasons} 季 {time_episodes} 集\n'
+                text = f'{text}\n⏰ *时长*：共 {time_seasons} 季 {time_episodes} 集'
 
             release_date = response['first_air_date']
             if release_date is not None:
-                text = f'{text}📆 *年份*：{release_date}\n'
+                text = f'{text}\n📆 *年份*：{release_date}'
 
         case 'movie':
             content_type = 'movie'
@@ -113,27 +99,46 @@ def onInfomation(object_type, tmdbid, query):
             original_title = response['original_title']
             text = f'*{object_switch}*：*{title}* ｜ {original_title}\n\n'
 
-            genre = ''
-            if len(response['genres']) > 0:
-                for i in response['genres']:
-                    name = i['name']
-                    genre = f'{genre}{name} '
-                text = f'{text}🗂 *类型*：{genre}\n'
 
             time = response['runtime']
             if time > 0:
-                text = f'{text}⏰ *时长*：{time} 分钟\n'
+                text = f'{text}\n⏰ *时长*：{time} 分钟'
 
             release_date = response['release_date']
             if release_date is not None:
-                text = f'{text}📆 *年份*：{release_date}\n'
+                text = f'{text}\n📆 *年份*：{release_date}'
 
+    genre = ''
+    if len(response['genres']) > 0:
+        for i in response['genres']:
+            name = i['name']
+            genre = f'{genre}{name} '
+        text = f'{text}\n🗂 *类型*：{genre}'    
+
+    iso_3166 = ''
+    iso_3166_get = requests.get('https://raw.githubusercontent.com/umpirsky/country-list/master/data/zh_CN/country.json')
+    iso_3166_json = json.loads(iso_3166_get.content.decode("utf-8"))
+    for code in response['production_countries']:
+        for i in iso_3166_json:
+            if code['iso_3166_1'] == i:
+                iso_3166 = f'{iso_3166}{iso_3166_json[i]} '
+    text = f'{text}\n🌎 *地区*：{iso_3166}'
+
+    iso_639 = ''
+    iso_639_get = requests.get('https://raw.githubusercontent.com/umpirsky/language-list/master/data/zh_CN/language.json')
+    iso_639_json = json.loads(iso_639_get.content.decode("utf-8"))
+    for code in response['spoken_languages']:
+        for i in iso_639_json:
+            if code['iso_639_1'] == i:
+                iso_639 = f'{iso_639}{iso_639_json[i]} '
+    text = f'{text}\n📝 *语言*：{iso_639}'
+    
     vote_average = response['vote_average']
     if vote_average != 0:
-        text = f'{text}📓 *评分*：{vote_average}\n'
+        text = f'{text}\n📓 *评分*：{vote_average}'
 
     url = f'https://www.themoviedb.org/{object_type}/{tmdbid}?language=zh-CN'
-    text = f'{text}🌐 *地址*：{url}'
+    text = f'{text}\n🌐 *地址*：{url}'
     keyboard = []
     keyboard.append([InlineKeyboardButton(
                     f'👉不满意搜索结果？再来一次吧⏳', callback_data=f'again_{query}')])
@@ -162,7 +167,7 @@ def onInfomation(object_type, tmdbid, query):
 
 
 def onSelectCountry(content_type, jwdbid):
-    list = getCountry()
+    list = mapping.getCountry()
     keyboard = []
     text = '🚫暂未找到可用的平台🚫'
     for i in list:
@@ -196,7 +201,7 @@ def onOffer(country, content_type, jwdbid):
 def onOfferConvert(offer, providers):
     dictlist = {}
     for i in offer:
-        name = TypeSwtich.onProviders(providers, i['provider_id'])
+        name = mapping.onProviders(providers, i['provider_id'])
         url = i['urls']['standard_web']
         match i['monetization_type']:
             case 'flatrate':
@@ -238,8 +243,8 @@ def onOfferConvert(offer, providers):
 
 def onOfferSender(dictlist, key, country):
     keyboard = []
-    keytype = TypeSwtich.onOfferType(key)
-    text = f'*找到了这些在{TypeSwtich.onCountry(country)}的{keytype}*'
+    keytype = mapping.onOfferType(key)
+    text = f'*找到了这些在{mapping.onCountry(country)}的{keytype}*'
     extra = ''
     for i in dictlist:
         name = dictlist[i]['name']
@@ -251,38 +256,3 @@ def onOfferSender(dictlist, key, country):
         keyboard.append([InlineKeyboardButton(f'{name}{extra}', url=url)])
     reply_markup = InlineKeyboardMarkup(keyboard)
     return text, reply_markup
-
-
-def onTrending(datatype):
-    match datatype:
-        case 'today':
-            key = bot.tmdb_apikey
-            language = 'zh-CN'
-            url = f'https://api.themoviedb.org/3/trending/all/day?api_key={key}&language={language}'
-            response = json.loads(requests.get(url).text)
-            text = f'👇为你送上本日特别推荐：👇'
-            keyboard = []
-            results = response['results']
-            for i in range(len(results)):
-                recommend = results[i]
-                id = recommend['id']
-                object_type = 'movie'
-                title = 'title'
-                if recommend['media_type'] == 'tv':
-                    object_type = 'tv'
-                    title = 'name'
-                query = recommend[title]
-                object_switch = TypeSwtich.onType(object_type)
-                content = f'#{i+1} -《{query}》{object_switch}'
-                button = InlineKeyboardButton(
-                    content, callback_data=f'info_{object_type}_{id}_{query}')
-                if len(keyboard) == 0:
-                    keyboard.append([button])
-                else:
-                    inline = len(keyboard)-1
-                    if len(keyboard[inline]) < 2:
-                        keyboard[inline].append(button)
-                    else:
-                        keyboard.append([button])
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            return text, reply_markup

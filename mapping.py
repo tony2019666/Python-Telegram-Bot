@@ -1,5 +1,7 @@
-import ButtonChecker
-
+def getCountry():
+    list = [['香港🇭🇰', 'HK'], ["台湾🇹🇼", 'TW'], ["美国🇺🇸", 'US'], ["新加坡🇸🇬", 'SG'], [
+        "韩国🇰🇷", 'KR'], ["日本🇯🇵", 'JP'], ["英国🇬🇧", 'GB'], ["土耳其🇹🇷", 'TR']]
+    return list
 
 def onType(object_type):
     match object_type:
@@ -12,7 +14,7 @@ def onType(object_type):
 
 
 def onCountry(country):
-    list = ButtonChecker.getCountry()
+    list = getCountry()
     for i in list:
         if country == i[1]:
             return i[0]
