@@ -99,7 +99,6 @@ def onInfomation(object_type, tmdbid, query):
             original_title = response['original_title']
             text = f'*{object_switch}*：*{title}* ｜ {original_title}\n\n'
 
-
             time = response['runtime']
             if time > 0:
                 text = f'{text}\n⏰ *时长*：{time} 分钟'
@@ -113,26 +112,25 @@ def onInfomation(object_type, tmdbid, query):
         for i in response['genres']:
             name = i['name']
             genre = f'{genre}{name} '
-        text = f'{text}\n🗂 *类型*：{genre}'    
+        text = f'{text}\n🗂 *类型*：{genre}'
 
-    iso_3166 = ''
-    iso_3166_get = requests.get('https://raw.githubusercontent.com/umpirsky/country-list/master/data/zh_CN/country.json')
-    iso_3166_json = json.loads(iso_3166_get.content.decode("utf-8"))
-    for code in response['production_countries']:
-        for i in iso_3166_json:
-            if code['iso_3166_1'] == i:
-                iso_3166 = f'{iso_3166}{iso_3166_json[i]} '
-    text = f'{text}\n🌎 *地区*：{iso_3166}'
+    with open("./json/country.json", 'r') as j_3166:
+        d_3166 = json.load(j_3166)
+        iso_3166 = ''
+        for code in response['production_countries']:
+            for i in d_3166:
+                if code['iso_3166_1'] == i:
+                    iso_3166 = f'{iso_3166}{d_3166[i]} '
+        text = f'{text}\n🌎 *地区*：{iso_3166}'
+    with open("./json/language.json", 'r') as j_639:
+        d_639 = json.load(j_639)
+        iso_639 = ''
+        for code in response['spoken_languages']:
+            for i in d_639:
+                if code['iso_639_1'] == i:
+                    iso_639 = f'{iso_639}{d_639[i]} '
+        text = f'{text}\n📝 *语言*：{iso_639}'
 
-    iso_639 = ''
-    iso_639_get = requests.get('https://raw.githubusercontent.com/umpirsky/language-list/master/data/zh_CN/language.json')
-    iso_639_json = json.loads(iso_639_get.content.decode("utf-8"))
-    for code in response['spoken_languages']:
-        for i in iso_639_json:
-            if code['iso_639_1'] == i:
-                iso_639 = f'{iso_639}{iso_639_json[i]} '
-    text = f'{text}\n📝 *语言*：{iso_639}'
-    
     vote_average = response['vote_average']
     if vote_average != 0:
         text = f'{text}\n📓 *评分*：{vote_average}'

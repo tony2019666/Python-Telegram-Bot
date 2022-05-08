@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
+from email import message
 import logging
 
 from telegram import Update, ParseMode
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, Filters
 
 import Commands.search as SearchCommand
 import Commands.today as TodayCommand
@@ -16,44 +17,47 @@ tmdb_timeout = 5
 
 # Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO, filename='recording.log', filemode='a'
 )
 
 logger = logging.getLogger(__name__)
 
-
 def start(update: Update, context: CallbackContext) -> None:
-    text = '回复 /s <搜索内容> 即可搜索指定的剧集/电影\n*更多功能还在开发/优化中..\n使用问题联系：@dyaxy*'
-    update.message.reply_markdown(text)
+    try:
+        text = '聊天框输入内容即可搜索指定的剧集/电影\n*更多功能还在开发/优化中..\n使用问题联系：@dyaxy*'
+        update.message.reply_markdown(text)
+
+    except Exception as error:
+        logging.error(error)
 
 
 def today(update: Update, context: CallbackContext) -> None:
-    text, reply_markup = TodayCommand.onTrending('today')
-    update.message.reply_markdown(
-        text, reply_markup=reply_markup)
+    try:
+        text, reply_markup = TodayCommand.onTrending('today')
+        update.message.reply_markdown(
+            text, reply_markup=reply_markup)
+
+    except Exception as error:
+        logging.error(error)
 
 
 def search(update: Update, context: CallbackContext) -> None:
     try:
-        content = context.args
-        query = str(context.args[0])
-        for i in range(1, len(content)):
-            query = query + ' '+context.args[i]
-        text, reply_markup = SearchCommand.onSearch(query)
-        update.message.reply_markdown(
+        m = update.message
+        text, reply_markup = SearchCommand.onSearch(m.text)
+        m.reply_markdown(
             text, reply_markup=reply_markup)
-
-    except (IndexError, ValueError):
-        update.message.reply_markdown('🚫*解析错误*🚫 用法: /s <搜索内容>')
+        logging.info(f'{m.chat.id}@{m.chat.username} - {m.text}')
+    except Exception as error:
+        logging.error(error)
 
 
 def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
-    bot = update.callback_query.bot
+    bot = query.bot
     calldata = query.data.split('_')
     calltype = calldata[0]
-    print(query.data)
     match calltype:
         case 'again':
             text, reply_markup = SearchCommand.onSearch(
@@ -107,6 +111,7 @@ def button(update: Update, context: CallbackContext) -> None:
                     reply_markup=reply_markup,
                     parse_mode=ParseMode.MARKDOWN
                 )
+    logging.info(f'{query.message.chat.id}@{query.message.chat.username} - {query.data}')
 
 
 def main() -> None:
@@ -114,10 +119,12 @@ def main() -> None:
 
     dispatcher = updater.dispatcher
 
-    dispatcher.add_handler(CommandHandler("s", search))
+    dispatcher.add_handler(CommandHandler("s", start))
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("today", today))
     dispatcher.add_handler(CallbackQueryHandler(button))
+    dispatcher.add_handler(MessageHandler(
+        Filters.text & ~Filters.command, search))
 
     updater.start_polling()
     updater.idle()
