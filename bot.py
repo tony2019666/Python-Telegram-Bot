@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from email import message
 import logging
 
 from telegram import Update, ParseMode

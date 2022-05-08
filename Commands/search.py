@@ -1,7 +1,6 @@
 import mapping
 import bot
 import json
-import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from justwatch import JustWatch
 import tmdbsimple as tmdb
